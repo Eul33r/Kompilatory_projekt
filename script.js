@@ -19,15 +19,23 @@ const TOKEN_TYPES = {
     LN: 'ln',
     PI: 'pi',
     EULER: 'e',
-    //IMAGINARY_UNIT: 'i',
+    IMAGINARY_UNIT: 'i',
     LPAREN: '(',
     RPAREN: ')',
+    LCURLYBRACKET: '{',
+    RCURLYBRACKET: '}',
     INTEGER: 'integer',
     FLOAT: 'float',
     IDENTIFIER: 'identifier',
     DIFF1: 'd/dx',
     EOF: 'eof',
 };
+
+function calculateLogBase(base, expression) {
+    // Obliczanie logarytmu o podstawie 'base' dla 'expression'
+    const log_base_x = Math.log(expression) / Math.log(base);
+    return log_base_x;
+}
 
 function factorial(n) {
     if (n === 0 || n === 1) {
@@ -83,6 +91,32 @@ function binomial(n, k) {
     return (n * binomial(n - 1, k - 1)) / k;
 }
 
+function expandPower(base, exponent) {
+    if (exponent === 0) {
+        return '1';
+    } else if (exponent === 1) {
+        return base;
+    }
+
+    let result = '';
+    for (let i = 0; i <= exponent; i++) {
+        let coeff = binomialCoefficient(exponent, i);
+        if (coeff !== 1) {
+            result += coeff;
+        }
+
+        if (i > 0) {
+            result += base;
+        }
+
+        if (i < exponent) {
+            result += `*${base}`;
+        }
+    }
+
+    return result;
+}
+
 function modularExponentiation(base, exponent, modulus) { // Szybkie potęgowanie modularne 
     if (modulus === 1) return 0; // Jeśli m = 1, wynik zawsze będzie 0
     let result = 1;
@@ -110,6 +144,13 @@ function legendre(a, p) {
 
 function gcd2(a, b) {
     // Użycie algorytmu Euklidesa
+    if (a === 0 && b === 0) {
+        alert('Największy wspólny dzielnik dwóch zer nie istnieje!');
+        return NaN;
+    }
+    else if (!Number.isInteger(a) || !Number.isInteger(b)) {
+        alert('Funkcja nwd przyjmuje argumenty całkowite!')
+    }
     while (b !== 0) {
         let temp = b;
         b = a % b;
@@ -137,6 +178,9 @@ function lcm(...numbers) {
 
 // Funkcja pomocnicza obliczająca LCM dwóch liczb
 function lcm2(a, b) {
+    if (!Number.isInteger(a) || !Number.isInteger(b)) {
+        alert('Funkcja nww przyjmuje argumenty całkowite!')
+    }
     return Math.abs(a * b) / gcd2(a, b);
 }
 
@@ -204,6 +248,9 @@ class Tokenizer {
         } else if (identifier.toLowerCase() === 'e') {
             return new Token(TOKEN_TYPES.EULER, Math.E);
         }
+        else if (identifier.toLowerCase() === 'i') {
+            return new Token(TOKEN_TYPES.IMAGINARY_UNIT, 'i');
+        }
         else if (identifier !== '') { // Dodany warunek sprawdzający, czy identyfikator nie jest pusty
             return new Token(TOKEN_TYPES.IDENTIFIER, identifier);
         }
@@ -240,6 +287,12 @@ class Tokenizer {
                 break;
             case ')':
                 operatorType = TOKEN_TYPES.RPAREN;
+                break;
+            case '{':
+                operatorType = TOKEN_TYPES.LCURLYBRACKET;
+                break;
+            case '}':
+                operatorType = TOKEN_TYPES.RCURLYBRACKET;
                 break;
             case ',':
                 operatorType = TOKEN_TYPES.COMMA;
@@ -337,14 +390,22 @@ class Parser {
 
 
             else if (functionName === 'gcd' || functionName === 'hcf') {
-                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                const secondArgument = this.expression();
-                return gcd(expressionValue, secondArgument);
+                let greatestDivisor = expressionValue;
+                while (this.currentToken.type === TOKEN_TYPES.COMMA) {
+                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                    const nextValue = this.expression();
+                    greatestDivisor = gcd(greatestDivisor, nextValue);
+                }
+                return greatestDivisor;
             }
             else if (functionName === 'lcm') {
-                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                const secondArgument = this.expression();
-                return lcm(expressionValue, secondArgument);
+                let lowestMultiple = expressionValue;
+                while (this.currentToken.type === TOKEN_TYPES.COMMA) {
+                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                    const nextValue = this.expression();
+                    lowestMultiple = lcm(lowestMultiple, nextValue); ///FIX ME!!!
+                }
+                return lowestMultiple;
             }
             /* FUNKCJE TEORIOLICZBOWE END */
             /* Obsługa funkcji dwuargumentowych END */
@@ -379,8 +440,45 @@ class Parser {
 
                 case 'exp':
                     return Math.exp(expressionValue);
-                case 'ln':
-                    return Math.log(expressionValue);
+                case 'ln': // naturalny
+                    if (expressionValue <= 0) {
+                        alert('Liczba logarytmowana musi być dodatnia!');
+                        return NaN;
+                    } else return Math.log(expressionValue);
+                case 'log': // zwykły, dziesiętny
+                    if (expressionValue <= 0) {
+                        alert('Liczba logarytmowana musi być dodatnia!');
+                        return NaN;
+                    } else return log_base_x(10, expressionValue);
+                case 'log_':
+                    this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis after log_
+
+                    // Sprawdź czy jest podstawa logarytmu
+                    let base = 10; // Domyślna podstawa logarytmu (np. 10)
+                    if (this.currentToken.type === TOKEN_TYPES.LPAREN) {
+                        // Jeśli jest nawias po log_, parsujemy wyrażenie jako podstawę
+                        this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis after log_(
+
+                        const baseExpression = this.expression(); // Pobieramy wartość wyrażenia dla podstawy
+                        base = baseExpression;
+
+                        this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis after podstawa
+                        console.log(base);
+                    }
+
+                    this.eat(TOKEN_TYPES.LCURLYBRACKET); // Eat the left parenthesis before logarytmowana liczba
+                    const logExpression = this.expression(); // Pobieramy wartość wyrażenia logarytmowanego
+
+                    this.eat(TOKEN_TYPES.RCURLYBRACKET); // Eat the right parenthesis after logarytmowana liczba
+                    console.log(logExpression);
+                    // Oblicz logarytm o podanej podstawie
+                    if (logExpression <= 0 || base <= 0 || base === 1) {
+                        alert('Niepoprawne argumenty logarytmu!');
+                        return NaN;
+                    } else {
+                        return Math.log(logExpression) / Math.log(base);
+                    }
+
                 case 'sqrt':
                     if (expressionValue < 0) {
                         alert('Nie wolno wyciągać pierwiastka kwadratowego z liczby ujemnej!');
@@ -425,8 +523,6 @@ class Parser {
                     //this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
 
                     return binomial(n, k); // Wywołanie funkcji binomial z n i k
-                case '||':
-                    return Math.abs(expressionValue);
                 case 'floor':
                     return Math.floor(expressionValue);
                 case 'ceil':
@@ -490,18 +586,18 @@ class Parser {
                     alert('Odwrotność liczby 0 nie istnieje!')
                 } else if (result === 'e') return Math.exp(exponent);
                 else if (result === 'i') {
-                    reducedExponent = exponent % 4;
+                    let reducedExponent = exponent % 4;
                     switch (reducedExponent) {
                         case 0:
                             result = 1;
                         case 1:
                             result = i;
-                            break;
                         case 2:
                             result = -1;
-                        case 3:
+                        default:
                             result = -i;
                     }
+                    return result;
                 }
                 else {
                     result = Math.pow(result, exponent);

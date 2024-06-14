@@ -1,0 +1,32 @@
+expression ::= term
+             | expression PLUS term
+             | expression MINUS term
+
+term ::= factor
+       | term MUL factor
+       | term DIV factor
+       | term MOD factor
+
+factor ::= primary
+         | factor EXP primary
+
+primary ::= number
+          | variable
+          | function_call
+          | LPAREN expression RPAREN
+         
+function_call ::= SIN LPAREN expression RPAREN
+                | COS LPAREN expression RPAREN
+                | ABS PIPE expression PIPE
+                | EXPONENTIAL LPAREN expression RPAREN
+                | LN LPAREN expression RPAREN
+
+                
+
+number ::= INTEGER
+         | FLOAT
+         | PI
+         | EULER
+         | IMAGINARY_UNIT
+
+variable ::= IDENTIFIER

@@ -11,6 +11,28 @@ body {
     text-align: center;
 }
 
+.clear-button {
+    cursor: pointer;
+}
+
+.clear-button i {
+    color: #888;
+}
+
+input[type="text"]:focus {
+    border-color: #00bcd4; /* Zmień kolor obramowania na akcentowy po skupieniu */
+    box-shadow: 0 0 5px rgba(0, 188, 212, 0.5); /* Dodaj lekki cień */
+}
+
+input[type="text"]::placeholder {
+    color: #ccc; /* Kolor tekstu placeholdera */
+    transition: color 0.3s ease; /* Animacja zmiany koloru */
+}
+
+input[type="text"]:focus::placeholder {
+    color: #aaa; /* Zmień kolor placeholdera po skupieniu */
+}
+
 form {
     width: 300px;
     text-align: center;
