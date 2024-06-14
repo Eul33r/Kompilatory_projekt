@@ -12,6 +12,7 @@ const TOKEN_TYPES = {
     LESSER: '<',
     NGREATER: '<=',
     NLESSER: '>=',
+    COMMA: ',',
     ABS: '||',
     SIN: 'sin',
     COS: 'cos',
@@ -144,6 +145,9 @@ class Tokenizer {
             case ')':
                 operatorType = TOKEN_TYPES.RPAREN;
                 break;
+            case ',':
+                operatorType = TOKEN_TYPES.COMMA;
+                break;
             default:
                 if (currentChar === '^') {
                     operatorType = TOKEN_TYPES.EXP;
@@ -190,6 +194,14 @@ class Parser {
             this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
 
             const expressionValue = this.expression(); // Przetwarzanie wyrażenia w nawiasach
+            if (functionName.toLowerCase() === 'binomial') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondExpressionValue = this.expression(); // Przetwarzanie drugiego argumentu
+
+                //this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
+
+                return binomial(expressionValue, secondExpressionValue); // Wywołanie funkcji binomial z n i k
+            }
 
             this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
 
@@ -255,8 +267,16 @@ class Parser {
                 /* FUNKCJE CYKLOMETRYCZNE END */
 
                 /* INNE FUNKCJE SPECJALNE */
+                case 'factorial':
+                    return factorial(expressionValue);
                 case 'binomial':
-                // oblicz n po k
+                    //this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
+                    const n = this.expression(); // Pobieramy wartość wyrażenia dla n
+                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                    const k = this.expression(); // Pobieramy wartość wyrażenia dla k
+                    //this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
+
+                    return binomial(n, k); // Wywołanie funkcji binomial z n i k
                 case '||':
                     return Math.abs(expressionValue);
                 case 'floor':
