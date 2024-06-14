@@ -64,9 +64,65 @@ function doubleFactorial(n) {
     }
 }
 
+function isPrime(number) {
+    if (number <= 1 || n % 2 === 0) return false;
+
+    if (number === 2) {
+        return true;
+    }
+    let sqrtNumber = Math.sqrt(number);
+    for (let i = 3; i <= sqrtNumber; i += 2) {
+        if (number % i === 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function binomial(n, k) {
     if (k === 0) return 1;
     return (n * binomial(n - 1, k - 1)) / k;
+}
+
+function modularExponentiation(base, exponent, modulus) { // Szybkie potęgowanie modularne 
+    if (modulus === 1) return 0; // Jeśli m = 1, wynik zawsze będzie 0
+    let result = 1;
+    base = base % modulus;
+
+    while (exponent > 0) {
+        // Jeśli exponent jest nieparzysty, mnożymy przez base (z modulusem), pomijając przekroczenie granic
+        if (exponent % 2 === 1) {
+            result = (result * base) % modulus;
+        }
+        // Teraz exponent jest parzysty, base = base * base
+        exponent = exponent >> 1; // równoważne exponent = Math.floor(exponent / 2)
+        base = (base * base) % modulus;
+    }
+    return result;
+}
+
+function legendre(a, p) {
+    if (a % p === 0) return 0;
+    else {
+        exponent = (p - 1) / 2;
+        return modularExponentiation(a, exponent, p);
+    }
+}
+
+function gcd(a, b) {
+    // Użycie algorytmu Euklidesa
+    while (b !== 0) {
+        let temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+function lcm(a, b) {
+    // Obliczanie lcm za pomocą gcd
+    return (a * b) / gcd(a, b);
 }
 
 // Klasa tokena
@@ -129,7 +185,7 @@ class Tokenizer {
         if (identifier.toLowerCase() === 'pi') {
             return new Token(TOKEN_TYPES.PI, Math.PI);
         } else if (identifier.toLowerCase() === 'e') {
-            return new Token(TOKEN_TYPES.EULER, MATH.E);
+            return new Token(TOKEN_TYPES.EULER, Math.E);
         } else if (identifier !== '') { // Dodany warunek sprawdzający, czy identyfikator nie jest pusty
             return new Token(TOKEN_TYPES.IDENTIFIER, identifier);
         }
@@ -222,28 +278,47 @@ class Parser {
 
         }
         else if (currentToken.type === TOKEN_TYPES.IDENTIFIER) {
-            const functionName = currentToken.value;
+            let functionName = currentToken.value;
+            functionName = functionName.toLowerCase();
             this.eat(TOKEN_TYPES.IDENTIFIER); // Eat the function name
             this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
 
             const expressionValue = this.expression(); // Przetwarzanie wyrażenia w nawiasach
 
             /* Obsługa funkcji dwuargumentowych */
-            if (functionName.toLowerCase() === 'binomial') {
+            if (functionName === 'binomial') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                const secondExpressionValue = this.expression(); // Przetwarzanie drugiego argumentu
+                const secondArgument = this.expression(); // Przetwarzanie drugiego argumentu
 
-                return binomial(expressionValue, secondExpressionValue); // Wywołanie funkcji binomial z n i k
+                return binomial(expressionValue, secondArgument); // Wywołanie funkcji binomial z n i k
             }
-            else if (functionName.toLowerCase() === 'max') {
+            else if (functionName === 'max') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
                 const secondArgument = this.expression();
                 return Math.max(expressionValue, secondArgument);
             }
-            else if (functionName.toLowerCase() === 'min') {
+            else if (functionName === 'min') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
                 const secondArgument = this.expression();
                 return Math.min(expressionValue, secondArgument);
+            }
+            /* FUNKCJE teorioliczbowe */
+            else if (functionName === 'legendre') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondArgument = this.expression();
+                return legendre(expressionValue, secondArgument);
+            }
+
+            /* FUNKCJE teorioliczbowe END */
+            else if (functionName === 'gcd' || functionName === 'hcf') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondArgument = this.expression();
+                return gcd(expressionValue, secondArgument);
+            }
+            else if (functionName === 'lcm') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondArgument = this.expression();
+                return lcm(expressionValue, secondArgument);
             }
 
             /* Obsługa funkcji dwuargumentowych END */
@@ -334,10 +409,6 @@ class Parser {
                     return expressionValue - Math.floor(expressionValue);
                 case 'trunc':
                     return Math.trunc(expressionValue);
-                case 'max':
-                    return Math.max(expressionValue);
-                case 'min':
-                    return Math.min(expressionValue);
                 case 'round':
                     return Math.round(expressionValue);
                 case 'sgn':
@@ -391,7 +462,7 @@ class Parser {
                     return NaN; // Return NaN for indeterminate form
                 } else if (result === 0 && exponent === -1) {
                     alert('Odwrotność liczby 0 nie istnieje!')
-                }
+                } else if (result === 'e') return Math.exp(exponent);
                 else {
                     result = Math.pow(result, exponent);
                 }
