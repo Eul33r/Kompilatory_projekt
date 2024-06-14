@@ -19,26 +19,50 @@ form {
     align-items: center;
 }
 
+.input-container {
+    position: relative;
+    width: calc(100% - 10px);
+    /* Szerokość pola tekstowego minus 10 pikseli na margines */
+    margin-bottom: 10px;
+}
+
 input[type="text"] {
-    width: calc(100% - 10px); /* Szerokość pola tekstowego minus 10 pikseli na margines */
+    width: 100%;
+    /* Pełna szerokość pola tekstowego */
     box-sizing: border-box;
     padding: 10px;
-    margin-bottom: 10px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 4px;
     outline: none;
 }
 
+.clear-button {
+    position: absolute;
+    right: 10px;
+    /* Odległość od prawej krawędzi inputa */
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #240c9e;
+    font-size: 14px;
+}
+
+.clear-button:hover {
+    color: #333;
+}
+
 button[type="button"] {
-    width: 100px; /* Szerokość przycisku "Calculate" */
+    width: 100px;
+    /* Szerokość przycisku "Calculate" */
     padding: 10px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 4px;
     outline: none;
     cursor: pointer;
-    margin-left: 10px; /* Margines po lewej stronie przycisku */
+    margin-top: 10px;
+    /* Margines na górze przycisku */
 }
 
 #result {

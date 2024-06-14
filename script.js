@@ -503,6 +503,10 @@ function main(input) {
     return parser.parse(); //// Zwracamy wynik bezpośrednio z metody parse
 }
 
+function clearField() {
+    document.getElementById('Field').value = '';
+}
+
 function calculate() {
     const inputField = document.getElementById('Field');
     const resultDiv = document.getElementById('result');
