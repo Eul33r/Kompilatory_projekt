@@ -12,8 +12,6 @@ const TOKEN_TYPES = {
     LESSER: '<',
     NGREATER: '<=',
     NLESSER: '>=',
-    COMMA: ',',
-    PIPE: '|',
     ABS: '||',
     SIN: 'sin',
     COS: 'cos',
@@ -21,7 +19,7 @@ const TOKEN_TYPES = {
     LN: 'ln',
     PI: 'pi',
     EULER: 'e',
-    IMAGINARY_UNIT: 'i',
+    //IMAGINARY_UNIT: 'i',
     LPAREN: '(',
     RPAREN: ')',
     INTEGER: 'integer',
@@ -110,7 +108,7 @@ function legendre(a, p) {
     }
 }
 
-function gcd(a, b) {
+function gcd2(a, b) {
     // Użycie algorytmu Euklidesa
     while (b !== 0) {
         let temp = b;
@@ -120,10 +118,29 @@ function gcd(a, b) {
     return a;
 }
 
-function lcm(a, b) {
-    // Obliczanie lcm za pomocą gcd
-    return (a * b) / gcd(a, b);
+function gcd(...numbers) {
+    if (numbers.length === 0) return null;
+    let result = numbers[0];
+    for (let i = 1; i < numbers.length; i++) {
+        result = gcd2(result, numbers[i]);
+    }
+    return result;
 }
+function lcm(...numbers) {
+    if (numbers.length === 0) return null;
+    let result = numbers[0];
+    for (let i = 1; i < numbers.length; i++) {
+        result = lcm2(result, numbers[i]);
+    }
+    return result;
+}
+
+// Funkcja pomocnicza obliczająca LCM dwóch liczb
+function lcm2(a, b) {
+    return Math.abs(a * b) / gcd2(a, b);
+}
+
+
 
 // Klasa tokena
 class Token {
@@ -186,7 +203,8 @@ class Tokenizer {
             return new Token(TOKEN_TYPES.PI, Math.PI);
         } else if (identifier.toLowerCase() === 'e') {
             return new Token(TOKEN_TYPES.EULER, Math.E);
-        } else if (identifier !== '') { // Dodany warunek sprawdzający, czy identyfikator nie jest pusty
+        }
+        else if (identifier !== '') { // Dodany warunek sprawdzający, czy identyfikator nie jest pusty
             return new Token(TOKEN_TYPES.IDENTIFIER, identifier);
         }
         else {
@@ -293,23 +311,31 @@ class Parser {
                 return binomial(expressionValue, secondArgument); // Wywołanie funkcji binomial z n i k
             }
             else if (functionName === 'max') {
-                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                const secondArgument = this.expression();
-                return Math.max(expressionValue, secondArgument);
+                let maxValue = expressionValue;
+                while (this.currentToken.type === TOKEN_TYPES.COMMA) {
+                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                    const nextValue = this.expression();
+                    maxValue = Math.max(maxValue, nextValue);
+                }
+                return maxValue;
             }
             else if (functionName === 'min') {
-                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                const secondArgument = this.expression();
-                return Math.min(expressionValue, secondArgument);
+                let minValue = expressionValue;
+                while (this.currentToken.type === TOKEN_TYPES.COMMA) {
+                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                    const nextValue = this.expression();
+                    minValue = Math.min(maxValue, nextValue);
+                }
+                return minValue;
             }
-            /* FUNKCJE teorioliczbowe */
+            /* FUNKCJE TEORIOLICZBOWE */
             else if (functionName === 'legendre') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
                 const secondArgument = this.expression();
                 return legendre(expressionValue, secondArgument);
             }
 
-            /* FUNKCJE teorioliczbowe END */
+
             else if (functionName === 'gcd' || functionName === 'hcf') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
                 const secondArgument = this.expression();
@@ -320,7 +346,7 @@ class Parser {
                 const secondArgument = this.expression();
                 return lcm(expressionValue, secondArgument);
             }
-
+            /* FUNKCJE TEORIOLICZBOWE END */
             /* Obsługa funkcji dwuargumentowych END */
 
             this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
@@ -463,6 +489,20 @@ class Parser {
                 } else if (result === 0 && exponent === -1) {
                     alert('Odwrotność liczby 0 nie istnieje!')
                 } else if (result === 'e') return Math.exp(exponent);
+                else if (result === 'i') {
+                    reducedExponent = exponent % 4;
+                    switch (reducedExponent) {
+                        case 0:
+                            result = 1;
+                        case 1:
+                            result = i;
+                            break;
+                        case 2:
+                            result = -1;
+                        case 3:
+                            result = -i;
+                    }
+                }
                 else {
                     result = Math.pow(result, exponent);
                 }
@@ -506,6 +546,13 @@ function main(input) {
 function clearField() {
     document.getElementById('Field').value = '';
 }
+
+function handleEnter(event) {
+    if (event.key === 'Enter') {
+        calculate();
+    }
+}
+
 
 function calculate() {
     const inputField = document.getElementById('Field');

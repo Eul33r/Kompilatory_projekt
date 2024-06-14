@@ -1,5 +1,5 @@
 // Spis tokenów
-const TOKEN_TYPES = {
+export const TOKEN_TYPES = {
     PLUS: '+',
     MINUS: '-',
     MUL: '*',

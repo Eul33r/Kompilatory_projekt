@@ -6,17 +6,22 @@
     <title>Różniczkowanie symboliczne</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Aplikacja do obliczeń matematycznych">
+    <meta name="keywords" content="różniczkowanie, matematyka, obliczenia, symboliczne">
+    <meta name="author" content="Karol Kubek AGH">
 </head>
 
 <body>
     <div class="container">
-        <form>
+        <form onsubmit="calculate(); return false;">
             <div class="input-container">
-                <input type="text" id="Field" placeholder="Enter what you want to calculate">
+                <input type="text" id="Field" placeholder="Enter what you want to calculate"
+                    onkeydown="handleEnter(event)">
                 <span class="clear-button" onclick="clearField()">Clear</span>
             </div>
-            <button type="button" onclick="calculate()">Calculate</button>
-
+            <button type="submit">Calculate</button>
             <div id="result"></div>
         </form>
     </div>
