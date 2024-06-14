@@ -31,6 +31,23 @@ const TOKEN_TYPES = {
     EOF: 'eof',
 };
 
+function debugTokens(inputExpression) {
+    // Utwórz nowy parser
+    const parser = new Parser(inputExpression);
+
+    // Przetwórz wyrażenie
+    const tokens = parser.parse();
+
+    // Wypisz wszystkie rozpoznane tokeny
+    console.log("Rozpoznane tokeny:");
+    tokens.forEach(token => {
+        console.log(token);
+    });
+
+    // Zwróć wynik parsowania (można zwrócić do dalszego przetwarzania, np. obliczeń)
+    return tokens;
+}
+
 function calculateLogBase(base, expression) {
     // Obliczanie logarytmu o podstawie 'base' dla 'expression'
     const log_base_x = Math.log(expression) / Math.log(base);
@@ -100,7 +117,7 @@ function expandPower(base, exponent) {
 
     let result = '';
     for (let i = 0; i <= exponent; i++) {
-        let coeff = binomialCoefficient(exponent, i);
+        let coeff = binomial(exponent, i);
         if (coeff !== 1) {
             result += coeff;
         }
@@ -381,6 +398,28 @@ class Parser {
                 }
                 return minValue;
             }
+            else if (functionName === 'log') {
+
+                let base = 10; // Domyślna podstawa dla logarytmu dziesiętnego
+
+                if (this.currentToken.type === TOKEN_TYPES.COMMA) {
+                    this.eat(TOKEN_TYPES.COMMA);
+                    base = expressionValue; // Jeśli podano drugi argument, traktuj go jako podstawę logarytmu
+                }
+
+                const logExpression = this.expression();
+
+                // Oblicz logarytm o podanej podstawie
+                if (logExpression <= 0) {
+                    alert('Liczba logarytmowana musi być dodatnia!');
+                    return NaN;
+                } else if (base <= 0 || base === 1) {
+                    alert('Podstawa logarytmu musi być większa od 0 i różna od 1');
+                    return NaN;
+                } else {
+                    return Math.log(logExpression) / Math.log(base);
+                }
+            }
             /* FUNKCJE TEORIOLICZBOWE */
             else if (functionName === 'legendre') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
@@ -450,35 +489,6 @@ class Parser {
                         alert('Liczba logarytmowana musi być dodatnia!');
                         return NaN;
                     } else return log_base_x(10, expressionValue);
-                case 'log_':
-                    this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis after log_
-
-                    // Sprawdź czy jest podstawa logarytmu
-                    let base = 10; // Domyślna podstawa logarytmu (np. 10)
-                    if (this.currentToken.type === TOKEN_TYPES.LPAREN) {
-                        // Jeśli jest nawias po log_, parsujemy wyrażenie jako podstawę
-                        this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis after log_(
-
-                        const baseExpression = this.expression(); // Pobieramy wartość wyrażenia dla podstawy
-                        base = baseExpression;
-
-                        this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis after podstawa
-                        console.log(base);
-                    }
-
-                    this.eat(TOKEN_TYPES.LCURLYBRACKET); // Eat the left parenthesis before logarytmowana liczba
-                    const logExpression = this.expression(); // Pobieramy wartość wyrażenia logarytmowanego
-
-                    this.eat(TOKEN_TYPES.RCURLYBRACKET); // Eat the right parenthesis after logarytmowana liczba
-                    console.log(logExpression);
-                    // Oblicz logarytm o podanej podstawie
-                    if (logExpression <= 0 || base <= 0 || base === 1) {
-                        alert('Niepoprawne argumenty logarytmu!');
-                        return NaN;
-                    } else {
-                        return Math.log(logExpression) / Math.log(base);
-                    }
-
                 case 'sqrt':
                     if (expressionValue < 0) {
                         alert('Nie wolno wyciągać pierwiastka kwadratowego z liczby ujemnej!');
@@ -515,14 +525,6 @@ class Parser {
                     return factorial(expressionValue);
                 case 'doublefactorial':
                     return doubleFactorial(expressionValue);
-                case 'binomial':
-                    //this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
-                    const n = this.expression(); // Pobieramy wartość wyrażenia dla n
-                    this.eat(TOKEN_TYPES.COMMA); // Eat the comma
-                    const k = this.expression(); // Pobieramy wartość wyrażenia dla k
-                    //this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
-
-                    return binomial(n, k); // Wywołanie funkcji binomial z n i k
                 case 'floor':
                     return Math.floor(expressionValue);
                 case 'ceil':
@@ -552,9 +554,6 @@ class Parser {
             throw new Error(`Unexpected token: ${currentToken.type}`);
         }
     }
-
-
-
     term() {
         let result = this.factor();
 
@@ -578,60 +577,68 @@ class Parser {
                 result %= this.factor();
             } else if (currentToken.type === TOKEN_TYPES.EXP) {
                 this.eat(TOKEN_TYPES.EXP);
-                const exponent = this.factor(); // Parse the exponent
-                if (result === 0 && exponent === 0) {
-                    alert('Wyrażenie 0^0 jest nieoznaczone!');
-                    return NaN; // Return NaN for indeterminate form
-                } else if (result === 0 && exponent === -1) {
-                    alert('Odwrotność liczby 0 nie istnieje!')
-                } else if (result === 'e') return Math.exp(exponent);
-                else if (result === 'i') {
-                    let reducedExponent = exponent % 4;
-                    switch (reducedExponent) {
-                        case 0:
-                            result = 1;
-                        case 1:
-                            result = i;
-                        case 2:
-                            result = -1;
-                        default:
-                            result = -i;
-                    }
-                    return result;
+
+                // Sprawdzamy czy potęga to wyrażenie algebraiczne
+                if (this.currentToken.type === TOKEN_TYPES.LPAREN) {
+                    const base = result; // Bieżący wynik jest podstawą potęgi
+                    this.eat(TOKEN_TYPES.LPAREN); // Przesuwamy token na wyrażenie w nawiasach
+                    const exponent = this.expression(); // Parsujemy wyrażenie w potędze
+                    this.eat(TOKEN_TYPES.RPAREN); // Zjedz token zamykający nawias
+                    return expandPower(base, exponent); // Rozwijamy potęgę używając funkcji expandPower
                 }
                 else {
-                    result = Math.pow(result, exponent);
+                        const exponent = this.factor(); // Parse the exponent
+                        if (result === 0 && exponent === 0) {
+                            alert('Wyrażenie 0^0 jest nieoznaczone!');
+                            return NaN; // Return NaN for indeterminate form
+                        } else if (result === 0 && exponent === -1) {
+                            alert('Odwrotność liczby 0 nie istnieje!')
+                        } else if (result === 'e') return Math.exp(exponent);
+                        else if (result === 'i') {
+                            let reducedExponent = exponent % 4;
+                            switch (reducedExponent) {
+                                case 0:
+                                    result = 1;
+                                case 1:
+                                    result = i;
+                                case 2:
+                                    result = -1;
+                                default:
+                                    result = -i;
+                            }
+                            return result;
+                        }
+                        else {
+                            result = Math.pow(result, exponent);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        expression() {
+            let result = this.term();
+
+            while ([TOKEN_TYPES.PLUS, TOKEN_TYPES.MINUS].includes(this.currentToken.type)) {
+                const currentToken = this.currentToken;
+
+                if (currentToken.type === TOKEN_TYPES.PLUS) {
+                    this.eat(TOKEN_TYPES.PLUS); // Eat the plus sign
+                    result += this.term();
+                } else if (currentToken.type === TOKEN_TYPES.MINUS) {
+                    this.eat(TOKEN_TYPES.MINUS); // Eat the minus sign
+                    result -= this.term();
                 }
             }
 
-
+            return result;
         }
 
-        return result;
-    }
-
-    expression() {
-        let result = this.term();
-
-        while ([TOKEN_TYPES.PLUS, TOKEN_TYPES.MINUS].includes(this.currentToken.type)) {
-            const currentToken = this.currentToken;
-
-            if (currentToken.type === TOKEN_TYPES.PLUS) {
-                this.eat(TOKEN_TYPES.PLUS); // Eat the plus sign
-                result += this.term();
-            } else if (currentToken.type === TOKEN_TYPES.MINUS) {
-                this.eat(TOKEN_TYPES.MINUS); // Eat the minus sign
-                result -= this.term();
-            }
+        parse() {
+            return this.expression();
         }
-
-        return result;
     }
-
-    parse() {
-        return this.expression();
-    }
-}
 
 // Funkcja główna programu
 function main(input) {

@@ -15,19 +15,24 @@
 
 <body>
     <div class="container">
-        <form onsubmit="calculate(); return false;">
+        <form>
             <div class="input-container">
-                <input type="text" id="Field" placeholder="Enter what you want to calculate"
-                    onkeydown="handleEnter(event)">
-                <span class="clear-button" onclick="clearField()">Clear
-                    <i class="fas fa-times-circle"></i>
-                </span>
+                <input type="text" id="Field" placeholder="Enter what you want to calculate">
+                <span class="clear-button" onclick="clearField()">Clear</span>
             </div>
-            <button type="submit">Calculate</button>
+            <button type="button" onclick="debugTokens()">Debug Tokens</button>
+            <button type="button" onclick="calculate()">Calculate</button>
             <div id="result"></div>
         </form>
     </div>
     <script src="script.js"></script>
+    <script>
+        function debugTokens() {
+            const inputExpression = document.getElementById('Field').value;
+            const tokens = debugTokens(inputExpression);
+            console.log(tokens); // Można także użyć tokens do dalszych działań
+        }
+    </script>
 </body>
 
 </html>
