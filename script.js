@@ -13,6 +13,7 @@ const TOKEN_TYPES = {
     NGREATER: '<=',
     NLESSER: '>=',
     COMMA: ',',
+    PIPE: '|',
     ABS: '||',
     SIN: 'sin',
     COS: 'cos',
@@ -39,6 +40,27 @@ function factorial(n) {
             result *= i;
         }
         return result;
+    }
+}
+
+function doubleFactorial(n) {
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    else {
+        let result = 1;
+        if (n % 2 === 0) {
+            for (let i = 2; i <= n; i += 2) {
+                result *= i;
+            }
+            return result;
+        } else {
+            for (let i = 3; i <= n; i += 2) {
+                result *= i;
+            }
+            return result;
+        }
+
     }
 }
 
@@ -148,6 +170,9 @@ class Tokenizer {
             case ',':
                 operatorType = TOKEN_TYPES.COMMA;
                 break;
+            case '|':
+                operatorType = TOKEN_TYPES.PIPE;
+                break;
             default:
                 if (currentChar === '^') {
                     operatorType = TOKEN_TYPES.EXP;
@@ -188,20 +213,40 @@ class Parser {
         } else if (currentToken.type === TOKEN_TYPES.INTEGER || currentToken.type === TOKEN_TYPES.FLOAT) {
             this.eat(currentToken.type);
             return currentToken.value;
-        } else if (currentToken.type === TOKEN_TYPES.IDENTIFIER) {
+        } else if (currentToken.type === TOKEN_TYPES.PIPE) {
+            this.eat(currentToken.type)
+            const expr = this.expression();
+            console.log(expr);
+            this.eat(TOKEN_TYPES.PIPE);
+            return Math.abs(expr);
+
+        }
+        else if (currentToken.type === TOKEN_TYPES.IDENTIFIER) {
             const functionName = currentToken.value;
             this.eat(TOKEN_TYPES.IDENTIFIER); // Eat the function name
             this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
 
             const expressionValue = this.expression(); // Przetwarzanie wyrażenia w nawiasach
+
+            /* Obsługa funkcji dwuargumentowych */
             if (functionName.toLowerCase() === 'binomial') {
                 this.eat(TOKEN_TYPES.COMMA); // Eat the comma
                 const secondExpressionValue = this.expression(); // Przetwarzanie drugiego argumentu
 
-                //this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
-
                 return binomial(expressionValue, secondExpressionValue); // Wywołanie funkcji binomial z n i k
             }
+            else if (functionName.toLowerCase() === 'max') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondArgument = this.expression();
+                return Math.max(expressionValue, secondArgument);
+            }
+            else if (functionName.toLowerCase() === 'min') {
+                this.eat(TOKEN_TYPES.COMMA); // Eat the comma
+                const secondArgument = this.expression();
+                return Math.min(expressionValue, secondArgument);
+            }
+
+            /* Obsługa funkcji dwuargumentowych END */
 
             this.eat(TOKEN_TYPES.RPAREN); // Eat the right parenthesis
 
@@ -269,6 +314,8 @@ class Parser {
                 /* INNE FUNKCJE SPECJALNE */
                 case 'factorial':
                     return factorial(expressionValue);
+                case 'doublefactorial':
+                    return doubleFactorial(expressionValue);
                 case 'binomial':
                     //this.eat(TOKEN_TYPES.LPAREN); // Eat the left parenthesis
                     const n = this.expression(); // Pobieramy wartość wyrażenia dla n
