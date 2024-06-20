@@ -87,6 +87,48 @@ button[type="button"] {
     /* Margines na górze przycisku */
 }
 
+.number-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px; /* Dowolna wysokość oś liczbowej */
+    position: relative;
+    margin-top: 20px; /* Przykładowy margines górny */
+}
+
+.number-line::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #333;
+    transform: translateY(-50%);
+}
+
+.number {
+    position: absolute;
+    font-size: 14px; /* Rozmiar czcionki liczby */
+    font-weight: bold;
+    width: 30px; /* Szerokość elementu liczby */
+    height: 30px; /* Wysokość elementu liczby */
+    border-radius: 50%; /* Okrągły kształt */
+    background-color: #3498db; /* Kolor tła liczby */
+    color: white; /* Kolor tekstu liczby */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Przykładowe style dla canvas */
+#numberLineCanvas {
+    display: block; /* Ustawienie canvas jako blokowy element */
+    margin: 20px auto; /* Marginesy, aby wyśrodkować canvas */
+    border: 1px solid #ccc; /* Obramowanie canvas */
+    background-color: #f0f0f0; /* Kolor tła canvas */
+}
+
 #result {
     font-size: 18px;
 }

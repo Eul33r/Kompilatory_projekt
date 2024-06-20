@@ -1,0 +1,5 @@
+Komenda do utworzenia lexera, parsera i tokenów na podstawie pliku z gramatyką (.g4) przy użyciu narzędzia antlr:
+
+java -jar C:\ANTLR_SETUP\antlr-4.13.1-complete.jar -Dlanguage=JavaScript grammar.g4
+
+UWAGA!! Ważne, aby plik .g4 miał taką samą nazwę, jak sprecyzowano w pierwszej linijce tego pliku.
